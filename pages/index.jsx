@@ -72,13 +72,13 @@ export default function Index() {
         alert(error);
         setLoggingIn(false);
         setSubmitDisable(false);
-        setNotify({
-          isOpen: true,
-          code: err.response?.data.code,
-          title: err.response?.data.title,
-          message: err.response?.data.message,
-          type: "error",
-        });
+        // setNotify({
+        //   isOpen: true,
+        //   code: err.response?.data.code,
+        //   title: err.response?.data.title,
+        //   message: err.response?.data.message,
+        //   type: "error",
+        // });
       });
   };
 
