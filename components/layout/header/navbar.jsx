@@ -23,7 +23,9 @@ const Navbar = ({ navLinks }) => {
           >
             {title}
           </MuiNextLink>
+          
         ))}
+        
       </Stack>
     </Toolbar>
   );

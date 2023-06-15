@@ -45,7 +45,7 @@ const SideDrawer = ({ navLinks }) => {
             {title}
           </MuiNextLink>
         </Typography>
-      ))}
+      ))};
     </Box>
   );
 

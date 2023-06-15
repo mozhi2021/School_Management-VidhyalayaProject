@@ -12,7 +12,6 @@ import SchoolImage from "../components/controls/schoolImage";
 import * as util from "../components/Global/util";
 import axios from "axios";
 import * as global from "../components/Global/global";
-import { Global } from "@emotion/react";
 
 const initialValues = {
   UserName: "",
@@ -53,70 +52,63 @@ export default function Index() {
     validate
   );
 
-  //const Getuser()
   const Getuser = () => {
     setLoggingIn(true);
-    window.alert(Global.API_URL);
     axios
-      .post("https://localhost:7213/api/Login/ValidateUser", {
+      .post(global.API_URL + "Login/ValidateUser", {
         UserName: formValues.UserName.trim(),
         Password: formValues.Password.trim(),
         IPAddress: formValues.IPAddress.trim(),
         Country: formValues.Country.trim(),
       })
       .then((res) => {
-        const data = res.data.data;
-        window.alert(JSON.stringify(data));
+        const data = res.data;
+
+        if (data.Msg != "Success") {
+          setNotify({
+            isOpen: true,
+            code: " ",
+            title: " ",
+            message: "data.Msg",
+            type: "error",
+          });
+          setLoggingIn(false);
+          setSubmitDisable(false);
+        } else {
+          // code to store data in  local
+          // util.in
+        }
       })
       .catch((error) => {
-        alert(error);
         setLoggingIn(false);
         setSubmitDisable(false);
-        // setNotify({
-        //   isOpen: true,
-        //   code: err.response?.data.code,
-        //   title: err.response?.data.title,
-        //   message: err.response?.data.message,
-        //   type: "error",
-        // });
+        setNotify({
+          isOpen: true,
+          code: error.response?.data.code,
+          title: error.response?.data.title,
+          message: error.response?.data.message,
+          type: "error",
+        });
       });
   };
 
-  // const Getuser = () => {
-  //   window.alert(Global.API_URL);
-  //   axios
-  //     .post("https://localhost:7213/api/Login/ValidateUser", {
-  //       UserName: formValues.UserName.trim(),
-  //       Password: formValues.Password.trim(),
-  //       IPAddress: formValues.IPAddress.trim(),
-  //       Country: formValues.Country.trim(),
-  //     })
-  //     .then((res) => {
-  //       const data = res.data.data;
-  //       window.alert(JSON.stringify(data));
-  //     })
-  //     .catch((error) => {
-  //       alert(error);
-  //     });
-  // };
-
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSubmitDisable(true);
 
     if (validate()) {
-      // axios
-      // .get("https://geolocation-db.com/json/")
-      // .then((response) => {
-      //   // alert(JSON.stringify(response.data));
-      //   //alert(response.data.IPv4);
-      //   formValues.IPAddress = response.data.IPv4;
-      //   formValues.Country = response.data.country_name;
-      window.alert(JSON.stringify(formValues));
-      Getuser();
-      // })
-      // .catch((error) => {
-      //   alert(error);
-      // });
+      axios
+        .get("https://geolocation-db.com/json/")
+        .then((response) => {
+          formValues.IPAddress = response.data.IPv4;
+          formValues.Country = response.data.country_name;
+          // window.alert(JSON.stringify(formValues));
+          Getuser();
+        })
+
+        .catch((error) => {
+          // alert(error);
+        });
     }
   };
 
@@ -186,6 +178,16 @@ export default function Index() {
                         text="Login"
                         disabled={submitDisable}
                       />
+                    </Grid>
+                    <br />
+
+                    <Grid container sx={{ justifyContent: "center" }}>
+                      {notify.isOpen && (
+                        <UserControls.Notification
+                          notify={notify}
+                          setNotify={setNotify}
+                        />
+                      )}
                     </Grid>
                   </>
                 </Paper>

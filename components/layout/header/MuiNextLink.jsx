@@ -3,6 +3,7 @@ import NextLink from "next/link";
 import MuiLink from "@mui/material/Link";
 import { useRouter } from "next/router";
 import clsx from "clsx";
+import { LinkProps } from "next/link";
 
 export const NextLinkComposed = React.forwardRef(function NextLinkComposed(
   props,
