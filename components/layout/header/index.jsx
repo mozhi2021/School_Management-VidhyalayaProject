@@ -20,6 +20,11 @@ const Header = () => {
   const navLinks = [
     { title: "Home", path: `/`, label: "home" },
     { title: "Contact", path: `/contactus`, label: "contact" },
+    {
+      title: "ChangePassword",
+      path: `changePassword`,
+      label: "ChangePassword",
+    },
   ];
 
   return (

@@ -8,21 +8,21 @@ import UserControls from "../components/userControls";
 import { useRouter as UseRouter } from "next/router";
 import MuiNextLink from "../components/layout/header/MuiNextLink";
 import Head from "next/head";
-import SchoolImage from "../components/controls/schoolImage";
-import * as util from "../components/Global/util";
-import axios from "axios";
-import * as global from "../components/Global/global";
+import PasswordImage from "../components/controls/PasswordImage";
+import validator from "validate";
 
 const initialValues = {
-  UserName: "",
-  Password: "",
-  IPAddress: "",
-  Country: "",
+  OldPassword: "",
+  NewPassword: "",
+  ConfirmPassword: "",
 };
 
-export default function Index() {
-
+export default function ChangePassword() {
   const [loggingIn, setLoggingIn] = useState(false);
+
+  const [NewPassword, setNewPassword] = useState("");
+  const [ErrorMessage, setErrorMessage] = useState("");
+  const isStrongPassword = "validator/lib/isStrongPassword.js";
 
   const [notify, setNotify] = useState({
     isOpen: false,
@@ -34,10 +34,47 @@ export default function Index() {
   const validate = (fieldValues = formValues) => {
     let temp = { ...errors };
 
-    if ("UserName" in fieldValues)
-      temp.UserName = fieldValues.UserName ? "" : "Required.";
-    if ("Password" in fieldValues)
-      temp.Password = fieldValues.Password ? "" : "Required.";
+    // let isStrongPassword = function () {
+    //   console.log("anything");
+    // };
+    // isStrongPassword;
+
+    if ("OldPassword" in fieldValues)
+      temp.OldPassword = fieldValues.OldPassword ? "" : "Required.";
+
+    if ("NewPassword" in fieldValues) {
+      temp.NewPassword = fieldValues.NewPassword ? "" : "Required.";
+      //    if (fieldValues.NewPassword != "")
+      // temp.NewPassword =
+
+      //   if (
+      //     validator.isStrongPassword(NewPassword, {
+      //       minLength: 8,
+      //       minUppercase: 1,
+      //       minNumbers: 1,
+      //       minSymbols: 1,
+      //     })
+      //   ) {
+      //     setErrorMessage("Is Strong Password");
+      //   } else {
+      //     setErrorMessage("Is Not Strong Password");
+      //   }
+      // }
+      if (fieldValues.NewPassword != "")
+        temp.NewPassword =
+          /^(?=.*[A-Z])(?=.*d)(?=.*[@$!%*?&])[A-Za-zd@$!%*?&]{8,10}$/.test(
+            fieldValues.NewPassword
+          )
+            ? ""
+            : "NewPassword is not valid. " +
+              "\nPassword should contain atleast one uppercase letter!" +
+              "\nPassword should contain atleast one number!" +
+              "\nPassword should contain atleast one special character!";
+    }
+
+    if ("ConfirmPassword" in fieldValues) {
+      temp.ConfirmPassword = fieldValues.ConfirmPassword ? "" : "Required.";
+    }
 
     setErrors({
       ...temp,
@@ -53,69 +90,18 @@ export default function Index() {
     validate
   );
 
-  const Getuser = () => {
-    setLoggingIn(true);
-    axios
-      .post(global.API_URL + "Login/ValidateUser", {
-        UserName: formValues.UserName.trim(),
-        Password: formValues.Password.trim(),
-        IPAddress: formValues.IPAddress.trim(),
-        Country: formValues.Country.trim(),
-      })
-      .then((res) => {
-        const data = res.data;
-
-        if (data.Msg != "Success") {
-          setNotify({
-            isOpen: true,
-            code: "Invalid User - GetUser ",
-            title: " ",
-            message: data.Msg,
-            type: "error",
-          });
-        } else {
-          util.InsertUserData(data);
-        }
-        setLoggingIn(false);
-        setSubmitDisable(false);
-      })
-      .catch((error) => {
-        setLoggingIn(false);
-        setSubmitDisable(false);
-        setNotify({
-          isOpen: true,
-          code: error.response?.data.code,
-          title: error.response?.data.title,
-          message: error.response?.data.message,
-          type: "error",
-        });
-      });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    setSubmitDisable(true);
     if (validate()) {
-      setSubmitDisable(true);
-
-      axios
-        .get("https://geolocation-db.com/json/")
-        .then((response) => {
-          formValues.IPAddress = response.data.IPv4;
-          formValues.Country = response.data.country_name;
-          Getuser();
-        })
-
-        .catch((error) => {});
+      //call the change password api
+    } else {
+      setSubmitDisable(false);
     }
   };
 
   return (
     <>
-      <Head>
-        <title>School | Login Form </title>
-      </Head>
-      {/* <Container> */}
       <Form onSubmit={handleSubmit}>
         <Grid container className="formContainer">
           <Grid item xs={12} md={6}>
@@ -131,38 +117,37 @@ export default function Index() {
                     component="div"
                     className="formContentTitle"
                   >
-                    School Management
+                    Change Password
                   </Typography>
                   <>
                     <Grid container>
-                      <Controls.Input
-                        name="UserName"
-                        label="UserName"
+                      <UserControls.Password
+                        name="OldPassword"
+                        label="Old Password"
                         required={true}
-                        value={formValues.UserName}
+                        value={formValues.OldPassword}
                         onChange={handleInputChange}
-                        error={errors.UserName}
-                        maxlength="30"
+                        error={errors.OldPassword}
+                      />
+
+                      <UserControls.Password
+                        name="NewPassword"
+                        label="New Password"
+                        required={true}
+                        value={formValues.NewPassword}
+                        onChange={handleInputChange}
+                        error={errors.NewPassword}
+                        minlength="8"
                       />
                       <UserControls.Password
-                        name="Password"
-                        label="Password"
+                        name="ConfirmPassword"
+                        label="Confirm Password"
                         required={true}
-                        value={formValues.Password}
+                        value={formValues.ConfirmPassword}
                         onChange={handleInputChange}
-                        error={errors.Password}
-                        maxlength="30"
+                        error={errors.ConfirmPassword}
+                        minlength="8"
                       />
-                    </Grid>
-                    <Grid container sx={{ px: "10%", justifyContent: "right" }}>
-                      <MuiNextLink
-                        key="Forgot Password"
-                        href="path"
-                        variant="button"
-                        styleClass="Password"
-                      >
-                        Forgot Password?
-                      </MuiNextLink>
                     </Grid>
                     <br />
                     <Grid container sx={{ px: "10%", justifyContent: "right" }}>
@@ -173,7 +158,7 @@ export default function Index() {
                       )}
                       <Controls.Button
                         type="Submit"
-                        text="Login"
+                        text="Submit"
                         disabled={submitDisable}
                       />
                     </Grid>
@@ -193,11 +178,10 @@ export default function Index() {
             </Container>
           </Grid>
           <Grid item xs={12} md={6}>
-            <SchoolImage />
+            <PasswordImage />
           </Grid>
         </Grid>
       </Form>
-      {/* </Container> */}
     </>
   );
 }
