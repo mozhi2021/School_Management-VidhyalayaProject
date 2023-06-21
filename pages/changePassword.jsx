@@ -9,20 +9,20 @@ import { useRouter as UseRouter } from "next/router";
 import MuiNextLink from "../components/layout/header/MuiNextLink";
 import Head from "next/head";
 import PasswordImage from "../components/controls/PasswordImage";
-import validator from "validate";
+import { Text } from "react-native";
 
 const initialValues = {
   OldPassword: "",
   NewPassword: "",
   ConfirmPassword: "",
+  message: "",
 };
 
-export default function ChangePassword() {
+export default function ChangePassword(props) {
   const [loggingIn, setLoggingIn] = useState(false);
 
   const [NewPassword, setNewPassword] = useState("");
   const [ErrorMessage, setErrorMessage] = useState("");
-  const isStrongPassword = "validator/lib/isStrongPassword.js";
 
   const [notify, setNotify] = useState({
     isOpen: false,
@@ -34,46 +34,43 @@ export default function ChangePassword() {
   const validate = (fieldValues = formValues) => {
     let temp = { ...errors };
 
-    // let isStrongPassword = function () {
-    //   console.log("anything");
-    // };
-    // isStrongPassword;
-
     if ("OldPassword" in fieldValues)
       temp.OldPassword = fieldValues.OldPassword ? "" : "Required.";
 
     if ("NewPassword" in fieldValues) {
-      temp.NewPassword = fieldValues.NewPassword ? "" : "Required.";
-      //    if (fieldValues.NewPassword != "")
-      // temp.NewPassword =
-
-      //   if (
-      //     validator.isStrongPassword(NewPassword, {
-      //       minLength: 8,
-      //       minUppercase: 1,
-      //       minNumbers: 1,
-      //       minSymbols: 1,
-      //     })
-      //   ) {
-      //     setErrorMessage("Is Strong Password");
-      //   } else {
-      //     setErrorMessage("Is Not Strong Password");
-      //   }
-      // }
+      temp.NewPassword = fieldValues.NewPassword.length > 8 ? "" : "Required.";
       if (fieldValues.NewPassword != "")
         temp.NewPassword =
-          /^(?=.*[A-Z])(?=.*d)(?=.*[@$!%*?&])[A-Za-zd@$!%*?&]{8,10}$/.test(
+          /^(?=.*[A-Z])(?=.*d)(?=.*[@$!%*?&])[A-Za-zd@$!%*?&]{8,15}$/.test(
             fieldValues.NewPassword
-          )
-            ? ""
-            : "NewPassword is not valid. " +
-              "\nPassword should contain atleast one uppercase letter!" +
-              "\nPassword should contain atleast one number!" +
-              "\nPassword should contain atleast one special character!";
+          ) ? (
+            ""
+          ) : (
+            <Text>
+              {"Password is not valid."} +
+              {"\nPassword should contain atleast one uppercase letter!"}+
+              {"\nPassword should contain atleast one number!"} +
+              {"\nPassword should contain atleast one special character!"};
+            </Text>
+          );
     }
-
     if ("ConfirmPassword" in fieldValues) {
       temp.ConfirmPassword = fieldValues.ConfirmPassword ? "" : "Required.";
+
+      if (fieldValues.ConfirmPassword != "")
+        temp.ConfirmPassword =
+          /^(?=.*[A-Z])(?=.*d)(?=.*[@$!%*?&])[A-Za-zd@$!%*?&]{8,10}$/.test(
+            fieldValues.ConfirmPassword
+          )
+            ? ""
+            : "Confirm password is not matched";
+      else if (fieldValues.ConfirmPassword) {
+        temp.ConfirmPassword = "New Password and Confirm password is same.";
+      }
+    }
+
+    if ("message" in fieldValues) {
+      temp.message = fieldValues.message ? "" : "Required.";
     }
 
     setErrors({
@@ -93,6 +90,7 @@ export default function ChangePassword() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitDisable(true);
+
     if (validate()) {
       //call the change password api
     } else {
@@ -138,6 +136,7 @@ export default function ChangePassword() {
                         onChange={handleInputChange}
                         error={errors.NewPassword}
                         minlength="8"
+                        maxlength="15"
                       />
                       <UserControls.Password
                         name="ConfirmPassword"
@@ -147,6 +146,7 @@ export default function ChangePassword() {
                         onChange={handleInputChange}
                         error={errors.ConfirmPassword}
                         minlength="8"
+                        maxlength="15"
                       />
                     </Grid>
                     <br />
