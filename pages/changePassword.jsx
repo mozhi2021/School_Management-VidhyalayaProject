@@ -1,35 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { Grid, Paper, Container, CircularProgress } from "@mui/material";
 import { useForm, Form } from "../components/useForm";
 import Controls from "../components/controls";
 import UserControls from "../components/userControls";
-import { useRouter as UseRouter } from "next/router";
-import MuiNextLink from "../components/layout/header/MuiNextLink";
-import Head from "next/head";
 import PasswordImage from "../components/controls/PasswordImage";
-import { Text } from "react-native";
+import * as util from "../components/Global/util";
+import axios from "axios";
+import * as global from "../components/Global/global";
 
 const initialValues = {
   OldPassword: "",
   NewPassword: "",
   ConfirmPassword: "",
-  message: "",
 };
 
 export default function ChangePassword(props) {
-  const [loggingIn, setLoggingIn] = useState(false);
-
-  const [NewPassword, setNewPassword] = useState("");
-  const [ErrorMessage, setErrorMessage] = useState("");
-
+  const [submitIn, setSubmitIn] = useState(false);
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
   const [notify, setNotify] = useState({
     isOpen: false,
     message: "",
     type: "",
   });
   const [submitDisable, setSubmitDisable] = useState(false);
+  const strongRegex = new RegExp(
+    "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})"
+  );
 
   const validate = (fieldValues = formValues) => {
     let temp = { ...errors };
@@ -38,39 +36,22 @@ export default function ChangePassword(props) {
       temp.OldPassword = fieldValues.OldPassword ? "" : "Required.";
 
     if ("NewPassword" in fieldValues) {
-      temp.NewPassword = fieldValues.NewPassword.length > 8 ? "" : "Required.";
-      if (fieldValues.NewPassword != "")
-        temp.NewPassword =
-          /^(?=.*[A-Z])(?=.*d)(?=.*[@$!%*?&])[A-Za-zd@$!%*?&]{8,15}$/.test(
-            fieldValues.NewPassword
-          ) ? (
-            ""
-          ) : (
-            <Text>
-              {"Password is not valid."} +
-              {"\nPassword should contain atleast one uppercase letter!"}+
-              {"\nPassword should contain atleast one number!"} +
-              {"\nPassword should contain atleast one special character!"};
-            </Text>
-          );
-    }
-    if ("ConfirmPassword" in fieldValues) {
-      temp.ConfirmPassword = fieldValues.ConfirmPassword ? "" : "Required.";
-
-      if (fieldValues.ConfirmPassword != "")
-        temp.ConfirmPassword =
-          /^(?=.*[A-Z])(?=.*d)(?=.*[@$!%*?&])[A-Za-zd@$!%*?&]{8,10}$/.test(
-            fieldValues.ConfirmPassword
-          )
-            ? ""
-            : "Confirm password is not matched";
-      else if (fieldValues.ConfirmPassword) {
-        temp.ConfirmPassword = "New Password and Confirm password is same.";
+      temp.NewPassword = fieldValues.NewPassword ? "" : "Required.";
+      if (fieldValues.NewPassword != "") {
+        temp.NewPassword = strongRegex.test(fieldValues.NewPassword)
+          ? ""
+          : "Password should be atleast one uppercase letter.  Password should be atleast one lowercase letter.  Password should be atleast one number.  Password should be atleast one special character.  Password should be minimum 8 characters ";
       }
     }
 
-    if ("message" in fieldValues) {
-      temp.message = fieldValues.message ? "" : "Required.";
+    if ("ConfirmPassword" in fieldValues) {
+      temp.ConfirmPassword = fieldValues.ConfirmPassword ? "" : "Required.";
+      if (fieldValues.ConfirmPassword != "") {
+        temp.ConfirmPassword =
+          formValues.NewPassword == fieldValues.ConfirmPassword //have to use formvalues not fieldvalues
+            ? ""
+            : "NewPassword and Confirm password does not match.";
+      }
     }
 
     setErrors({
@@ -87,12 +68,58 @@ export default function ChangePassword(props) {
     validate
   );
 
+  const ChangePassword = () => {
+    setSubmitIn(true);
+
+    axios
+      .post(
+        global.API_URL +
+          "Login/ChangePassword?OldPassword=" +
+          formValues.OldPassword.trim()
+        // +
+        // "&PersonID=" +
+        // formValues.PersonID.trim()
+      )
+      .then((res) => {
+        const data = res.data;
+
+        if (data != "Password Updated") {
+          setNotify({
+            isOpen: true,
+            code: "OldPassword incorrect - ChangePassword",
+            title: "",
+            message: data,
+            type: "error",
+          });
+        } else {
+          // setPasswordUpdated(true);
+          util.GetUserData(data);
+        }
+        setSubmitIn(false);
+        setSubmitDisable(false);
+      })
+      .catch((error) => {
+        setSubmitIn(false);
+        setSubmitDisable(false);
+        setNotify({
+          isOpen: true,
+          code: error.response?.data.code,
+          title: error.response?.data.title,
+          message: error.response?.data.message,
+          type: "error",
+        });
+      });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitDisable(true);
 
     if (validate()) {
-      //call the change password api
+      setSubmitDisable(true);
+
+      const user = util.GetUserData();
+      alert(user.PersonID);
+      //ChangePassword();
     } else {
       setSubmitDisable(false);
     }
@@ -135,7 +162,6 @@ export default function ChangePassword(props) {
                         value={formValues.NewPassword}
                         onChange={handleInputChange}
                         error={errors.NewPassword}
-                        minlength="8"
                         maxlength="15"
                       />
                       <UserControls.Password
@@ -151,7 +177,7 @@ export default function ChangePassword(props) {
                     </Grid>
                     <br />
                     <Grid container sx={{ px: "10%", justifyContent: "right" }}>
-                      {loggingIn && (
+                      {submitIn && (
                         <Box sx={{ ml: 2, mr: 2 }}>
                           <CircularProgress color="primary" />
                         </Box>

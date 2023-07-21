@@ -1,41 +1,45 @@
-import React, { useState } from "react";
+import React from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import { Typography } from "@mui/material";
 import { Grid, Paper, Container, CircularProgress } from "@mui/material";
 import { useForm, Form } from "../components/useForm";
 import Controls from "../components/controls";
-import UserControls from "../components/userControls";
-import MuiNextLink from "../components/layout/header/MuiNextLink";
-import Head from "next/head";
-import SchoolImage from "../components/controls/schoolImage";
-import * as util from "../components/Global/util";
+import ForgotpasswordImage from "../components/controls/forgotPasswordImage";
 import axios from "axios";
 import * as global from "../components/Global/global";
+import UserControls from "../components/userControls";
+import MuiNextLink from "../components/layout/header/MuiNextLink";
 
 const initialValues = {
   UserName: "",
-  Password: "",
-  IPAddress: "",
-  Country: "",
+  EmailAddress: "",
 };
 
-export default function Index() {
-  const [loggingIn, setLoggingIn] = useState(false);
+export default function ForgotPassword(props) {
+  const [submitIn, setSubmitIn] = useState(false);
+  const [submitDisable, setSubmitDisable] = useState(false);
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
 
   const [notify, setNotify] = useState({
     isOpen: false,
     message: "",
     type: "",
   });
-  const [submitDisable, setSubmitDisable] = useState(false);
 
   const validate = (fieldValues = formValues) => {
     let temp = { ...errors };
 
     if ("UserName" in fieldValues)
       temp.UserName = fieldValues.UserName ? "" : "Required.";
-    if ("Password" in fieldValues)
-      temp.Password = fieldValues.Password ? "" : "Required.";
+
+    if ("EmailAddress" in fieldValues) {
+      temp.EmailAddress = fieldValues.EmailAddress ? "" : "Required";
+      if (fieldValues.EmailAddress != "")
+        temp.EmailAddress = /$^|.+@.+..+/.test(fieldValues.EmailAddress)
+          ? ""
+          : "EmailAddress is not valid";
+    }
 
     setErrors({
       ...temp,
@@ -51,34 +55,36 @@ export default function Index() {
     validate
   );
 
-  const Getuser = () => {
-    setLoggingIn(true);
+  const ForgotPassword = () => {
+    setSubmitIn(true);
+    // alert(global.API_URL);
     axios
-      .post(global.API_URL + "Login/ValidateUser", {
-        UserName: formValues.UserName.trim(),
-        Password: formValues.Password.trim(),
-        IPAddress: formValues.IPAddress.trim(),
-        Country: formValues.Country.trim(),
-      })
+      .post(
+        global.API_URL +
+          "Login/UpdatePassword?UserName=" +
+          formValues.UserName.trim() +
+          "&EmailAddress=" +
+          formValues.EmailAddress.trim()
+      )
       .then((res) => {
         const data = res.data;
 
-        if (data.Msg != "Success") {
+        if (data != "Password Updated") {
           setNotify({
             isOpen: true,
-            code: "Invalid User - GetUser ",
-            title: " ",
-            message: data.Msg,
+            code: "Invalid User - ForgotPassword",
+            title: "",
+            message: data,
             type: "error",
           });
         } else {
-          util.InsertUserData(data);
+          setPasswordUpdated(true);
         }
-        setLoggingIn(false);
+        setSubmitIn(false);
         setSubmitDisable(false);
       })
       .catch((error) => {
-        setLoggingIn(false);
+        setSubmitIn(false);
         setSubmitDisable(false);
         setNotify({
           isOpen: true,
@@ -96,28 +102,18 @@ export default function Index() {
     if (validate()) {
       setSubmitDisable(true);
 
-      axios
-        .get("https://geolocation-db.com/json/")
-        .then((response) => {
-          formValues.IPAddress = response.data.IPv4;
-          formValues.Country = response.data.country_name;
-          Getuser();
-        })
-
-        .catch((error) => {});
+      ForgotPassword();
     }
   };
 
   return (
     <>
-      <Head>
-        <title>School Form </title>
-      </Head>
       <Form onSubmit={handleSubmit}>
-        <Grid container className="formContainer">
-          <Grid item xs={12} md={6}>
-            <Container maxWidth="lg">
-              <Box sx={{ pt: 1 }}>
+        {/* <Grid container className="formContainer"> */}
+        <Grid item xs={12} md={6}>
+          <Container maxWidth="lg">
+            <Box sx={{ pt: 1 }}>
+              {!passwordUpdated && (
                 <Paper
                   sx={{ backgroundColor: "#F5F5F5" }}
                   className="formpageContent"
@@ -128,7 +124,7 @@ export default function Index() {
                     component="div"
                     className="formContentTitle"
                   >
-                    School Management
+                    Forgot Password
                   </Typography>
                   <>
                     <Grid container>
@@ -139,43 +135,30 @@ export default function Index() {
                         value={formValues.UserName}
                         onChange={handleInputChange}
                         error={errors.UserName}
-                        maxlength="30"
                       />
-                      <UserControls.Password
-                        name="Password"
-                        label="Password"
+
+                      <Controls.Input
+                        label="EmailAddress"
+                        name="EmailAddress"
                         required={true}
-                        value={formValues.Password}
+                        value={formValues.EmailAddress}
                         onChange={handleInputChange}
-                        error={errors.Password}
-                        maxlength="30"
+                        error={errors.EmailAddress}
                       />
-                    </Grid>
-                    <Grid container sx={{ px: "10%", justifyContent: "right" }}>
-                      <MuiNextLink
-                        key="Forgot Password"
-                        href="forgotPassword"
-                        variant="button"
-                        styleClass="Password"
-                      >
-                        Forgot Password?
-                      </MuiNextLink>
                     </Grid>
                     <br />
                     <Grid container sx={{ px: "10%", justifyContent: "right" }}>
-                      {loggingIn && (
+                      {submitIn && (
                         <Box sx={{ ml: 2, mr: 2 }}>
                           <CircularProgress color="primary" />
                         </Box>
                       )}
                       <Controls.Button
                         type="Submit"
-                        text="Login"
+                        text="Submit"
                         disabled={submitDisable}
                       />
                     </Grid>
-                    <br />
-
                     <Grid container sx={{ justifyContent: "center" }}>
                       {notify.isOpen && (
                         <UserControls.Notification
@@ -186,13 +169,31 @@ export default function Index() {
                     </Grid>
                   </>
                 </Paper>
-              </Box>
-            </Container>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <SchoolImage />
-          </Grid>
+              )}
+              {passwordUpdated && (
+                <Grid container sx={{ justifyContent: "center" }}>
+                  Password is updated and Send to your email address.
+                  <Grid container sx={{ px: "10%", justifyContent: "right" }}>
+                    <MuiNextLink
+                      key="Home"
+                      href="/"
+                      variant="button"
+                      styleClass="home"
+                    >
+                      Click here to Login
+                    </MuiNextLink>
+                  </Grid>
+                  <br />
+                </Grid>
+              )}
+            </Box>
+          </Container>
         </Grid>
+
+        <Grid item xs={12} md={6}>
+          <ForgotpasswordImage />
+        </Grid>
+        {/* </Grid> */}
       </Form>
     </>
   );

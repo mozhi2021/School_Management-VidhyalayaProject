@@ -36,6 +36,14 @@ export default function Password(props) {
         <InputLabel>{required ? label + " *" : label}</InputLabel>
 
         <OutlinedInput
+          onPaste={(e) => {
+            e.preventDefault();
+            return false;
+          }}
+          onCopy={(e) => {
+            e.preventDefault();
+            return false;
+          }}
           disabled={disabled || false}
           value={value}
           onChange={onChange}

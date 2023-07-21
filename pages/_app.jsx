@@ -21,7 +21,6 @@ export default function MyApp(props) {
           src="https://content.digitaldisbursements.com/v1.4.3/assets/host.js"
           async
         ></script>
-        {/* <title>{CaseInfo.CaseName}</title> */}
       </Head>
       <ThemeProvider theme={theme}>
         <CssBaseline />
